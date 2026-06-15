@@ -1,0 +1,83 @@
+package committee.nova.mods.avaritia;
+
+import committee.nova.mods.avaritia.common.entity.EndestPearlEntity;
+import committee.nova.mods.avaritia.common.item.misc.InfinityClockItem;
+import committee.nova.mods.avaritia.init.compat.projecte.ModEMCHandler;
+import committee.nova.mods.avaritia.init.config.ModConfig;
+import committee.nova.mods.avaritia.init.data.ModDataGen;
+import committee.nova.mods.avaritia.init.registry.*;
+import net.minecraft.Util;
+import net.minecraft.core.Position;
+import net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.DispenserBlock;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Description:
+ * @author cnlimiter
+ * Date: 2022/5/15 10:10
+ * Version: 1.0
+ */
+@Mod(Const.MOD_ID)
+public class Avaritia {
+
+    public Avaritia() {
+        ModConfig.register();
+        @SuppressWarnings("removal")
+        var bus = FMLJavaModLoadingContext.get().getModEventBus();
+        bus.addListener(this::setup);
+        bus.addListener(ModDataGen::gatherData);
+
+        var forgeBus = MinecraftForge.EVENT_BUS;
+        forgeBus.register(this);
+
+        ModBlocks.BLOCKS.register(bus);
+        ModItems.ITEMS.register(bus);
+        ModCreativeModeTabs.TABS.register(bus);
+        ModTileEntities.BLOCK_ENTITIES.register(bus);
+        ModMenus.MENUS.register(bus);
+        ModMobEffects.MOB_EFFECTS.register(bus);
+        ModEntities.ENTITIES.register(bus);
+        ModEnchants.ENCHANTMENT.register(bus);
+        ModParticles.PARTICLE_TYPE.register(bus);
+        ModRecipeTypes.RECIPES.register(bus);
+        ModRecipeSerializers.SERIALIZERS.register(bus);
+
+    }
+
+    public void setup(final FMLCommonSetupEvent event) {
+        if (Const.isLoad("projecte")) ModEMCHandler.init();
+        DispenserBlock.registerBehavior(ModItems.endest_pearl.get(), new AbstractProjectileDispenseBehavior() {
+            protected @NotNull Projectile getProjectile(@NotNull Level level, @NotNull Position position, @NotNull ItemStack stack) {
+                return Util.make(new EndestPearlEntity(level, position.x(), position.y(), position.z()), (entity) -> entity.setItem(stack));
+            }
+        });
+    }
+
+    @SubscribeEvent
+    public void onServerStarted(ServerStartedEvent event) {
+        // 服务器启动完成后加载加速数据
+        ServerLevel overworld = event.getServer().getLevel(Level.OVERWORLD);
+        if (overworld != null) {
+            InfinityClockItem.loadAcceleratedBlocksFromSavedData(overworld);
+        }
+    }
+
+    @SubscribeEvent
+    public void onLevelSave(LevelEvent.Save event) {
+        if (event.getLevel() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD) {
+            InfinityClockItem.saveAcceleratedBlocksToSavedData(level);
+        }
+    }
+}

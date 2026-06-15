@@ -1,0 +1,29 @@
+package committee.nova.mods.avaritia.init.compat.projecte;
+
+import committee.nova.mods.avaritia.Const;
+import committee.nova.mods.avaritia.init.config.ModConfig;
+import committee.nova.mods.avaritia.init.registry.ModItems;
+import moze_intel.projecte.api.imc.CustomEMCRegistration;
+import moze_intel.projecte.api.nss.NSSItem;
+import moze_intel.projecte.emc.mappers.APICustomEMCMapper;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ItemLike;
+
+/**
+ * @Project: Avaritia
+ * @author cnlimiter
+ * @CreateTime: 2024/7/15 下午11:58
+ * @Description:
+ */
+public class ModEMCHandler {
+    private static void registerEMC(ItemLike item, int emc) {
+        APICustomEMCMapper.INSTANCE.registerCustomEMC(Const.MOD_ID, new CustomEMCRegistration(NSSItem.createItem(item), emc));
+    }
+
+    public static void init() {
+        registerEMC(ModItems.neutron_pile.get(), ModConfig.neutronPileEmc.get());
+        registerEMC(ModItems.blaze_cube.get(), ModConfig.blazeCubeEmc.get());
+        registerEMC(Items.TOTEM_OF_UNDYING, ModConfig.vanillaTotemEmc.get());
+        registerEMC(ModItems.full_matter_cluster.get(),0);
+    }
+}
